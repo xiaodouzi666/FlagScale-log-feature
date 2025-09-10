@@ -1,6 +1,5 @@
-# FlagScale Monitor Service 测试指南
+# 测试指南
 
-## 🚀 快速开始
 
 ### 1. 基本测试（推荐先运行）
 ```bash
@@ -10,13 +9,13 @@ python test_monitor_service.py
 
 ### 2. 指定测试类型
 ```bash
-# 只测试基本功能
+# 基本功能
 python test_monitor_service.py --test basic
 
-# 只测试集成功能  
+# 集成功能  
 python test_monitor_service.py --test integration
 
-# 只测试日志收集
+# 日志收集
 python test_monitor_service.py --test logs
 ```
 
@@ -25,34 +24,24 @@ python test_monitor_service.py --test logs
 # 设置监控间隔为5秒
 python test_monitor_service.py --interval 5
 
-# 使用自定义配置文件
+# 自定义配置文件
 python test_monitor_service.py --config your_config.yaml
 ```
 
-## 📋 改进内容说明
+## 改进内容
 
-### 🔧 解决的问题
-1. **终端阻塞问题**：移除了 `runner_train.py` 中的 `while True` 无限循环
-2. **监控逻辑分离**：创建独立的 `MonitorService` 类，在后台线程中运行
-3. **非阻塞接口**：提供多种非阻塞的监控启动方式
+### 那个无限循环的问题：
+移除 `runner_train.py` 中的 `while True` 无限循环
 
-### 📁 新增文件
+### 新增文件
 - `flagscale/elastic/monitor_service.py` - 独立的监控服务
 - `test_monitor_service.py` - 测试脚本
-- `MONITOR_SERVICE_TEST_GUIDE.md` - 测试指南
 
-### 🔄 修改的文件
+### 修改的文件
 - `flagscale/runner/runner_train.py` - 集成监控服务，提供非阻塞接口
 
-## 🎯 使用方式对比
 
-### ❌ 原来的用法（会阻塞终端）
-```python
-runner = SSHTrainRunner(config)
-runner.run(monitor=True)  # 这里会卡住终端！
-```
-
-### ✅ 新的用法（不阻塞终端）
+### 用法
 
 #### 方式1：训练时启动监控
 ```python
