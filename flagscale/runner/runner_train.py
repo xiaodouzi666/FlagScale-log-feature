@@ -21,6 +21,7 @@ from flagscale.runner.utils import (
     run_scp_command,
     run_ssh_command,
 )
+from flagscale.elastic.monitor_service import MonitorService
 
 _MAX_CPU_COUNT = multiprocessing.cpu_count()
 
@@ -39,7 +40,7 @@ def _get_args_megatron(config: DictConfig):
     new_config_dict.update(config_dict["model"])
     new_config_dict.update(config_dict["data"])
 
-    ignore_keys = ["log_dir", "details_dir", "scripts_dir", "pids_dir"]
+    ignore_keys = ["log_dir", "details_dir", "scripts_dir", "pids_dir", "diagnostic_dir"]
     # Flatten the dictionary to a list of arguments
     args = flatten_dict_to_args(new_config_dict, ignore_keys)
 
@@ -373,7 +374,8 @@ class SSHTrainRunner(RunnerBase):
         else:
             run_local_command(f"bash {host_run_script_file}", dryrun)
 
-    def run(self, with_test=False, dryrun=False, monitor=False, interval=10):
+    def run(self, with_test=False, dryrun=False, monitor=False, interval=10, 
+            enable_log_collection=True, enable_diagnostic=True):
 
         num_visible_devices = None
         runner_config = self.config.experiment.runner
@@ -427,20 +429,21 @@ class SSHTrainRunner(RunnerBase):
                 dryrun=dryrun,
                 cur_envs=self.user_envs,
             )
-        # If need monitor, query status continually
+        # If need monitor, start monitoring service (non-blocking)
         if monitor:
-            # sleep to wait task already started
-            time.sleep(interval)
-            try:
-                while True:
-                    status = self._query_status()
-                    logger.info(f"Job Status: {status.name}")
-                    if status == JobStatus.COMPLETED_OR_IDLE:
-                        break
-                    time.sleep(interval)
-                logger.info("Job Ended.")
-            except Exception as e:
-                logger.info(e)
+            logger.info("Starting monitoring service...")
+            monitor_service = MonitorService(self.config, self, interval)
+            monitor_service.start_monitoring(
+                enable_log_collection=enable_log_collection,
+                enable_diagnostic=enable_diagnostic
+            )
+            logger.info("Monitoring service started in background")
+            logger.info("Training job will continue running, monitor logs will be saved")
+            
+            # 返回监控服务实例，供外部控制
+            return monitor_service
+        
+        return None
 
     def _stop_each(self, host, node_rank):
         host_stop_script_file = _generate_stop_script_train(self.config, host, node_rank)
@@ -632,27 +635,66 @@ class SSHTrainRunner(RunnerBase):
             status = False
         return status
 
-    def query(self, interval=10, timeout=None):
+    def query_once(self):
         """
-        Query job status and log.
+        Query job status once (non-blocking).
         There are three kinds of status for a Job:
             RUNNING: The job is running.
             COMPLETED_OR_IDLE: The job is completed or idle.
             TRANSITIONAL: The job is starting or stopping.
 
+        Returns:
+            JobStatus: Current job status
+        """
+        return self._query_status()
+    
+    def start_monitoring_service(self, interval=10, enable_log_collection=True, 
+                               enable_diagnostic=True):
+        """
+        Start independent monitoring service (non-blocking).
+        
         Args:
-            interval (int, optional): The interval of querying job status. Default: 10.
-            timeout (float, optional): The timeout of query job status, if None, the query will keep indefinitely. Default: None.
-
+            interval (int): Monitor interval in seconds
+            enable_log_collection (bool): Enable log collection
+            enable_diagnostic (bool): Enable diagnostic report generation
+            
+        Returns:
+            MonitorService: Monitor service instance
+        """
+        monitor_service = MonitorService(self.config, self, interval)
+        monitor_service.start_monitoring(
+            enable_log_collection=enable_log_collection,
+            enable_diagnostic=enable_diagnostic
+        )
+        logger.info(f"Independent monitoring service started with interval={interval}s")
+        return monitor_service
+    
+    def query(self, interval=10, timeout=None):
+        """
+        Query job status with optional timeout (blocking).
+        
+        Args:
+            interval (int): Query interval in seconds
+            timeout (float, optional): Timeout in seconds, None for indefinite
+            
         Returns:
             None
-
+        
+        Warning:
+            This method is blocking and should be used with caution.
+            Consider using query_once() or start_monitoring_service() for non-blocking alternatives.
         """
+        logger.warning("Using blocking query method. Consider using query_once() or start_monitoring_service()")
+        
         if timeout is None:
-            while True:
-                job_status = self._query_status()
-                logger.info(f"Job status: {job_status.name}")
-                time.sleep(interval)
+            logger.warning("Entering indefinite blocking query loop. Press Ctrl+C to exit.")
+            try:
+                while True:
+                    job_status = self._query_status()
+                    logger.info(f"Job status: {job_status.name}")
+                    time.sleep(interval)
+            except KeyboardInterrupt:
+                logger.info("Query interrupted by user")
         else:
             start_time = time.time()
             cur_time = time.time()
@@ -661,6 +703,7 @@ class SSHTrainRunner(RunnerBase):
                 logger.info(f"Job status: {job_status.name}")
                 time.sleep(interval)
                 cur_time = time.time()
+            logger.info(f"Query timeout reached ({timeout}s)")
 
 
 class CloudTrainRunner(RunnerBase):
