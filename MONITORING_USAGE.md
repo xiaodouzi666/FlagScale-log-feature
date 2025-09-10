@@ -1,10 +1,7 @@
 # FlagScale 智能监控功能使用说明
 
-## 🚀 快速使用
-
-### 运行训练（自动启用监控）
+### 运行训练 (这里的路径和文件名是我自己的，根据对应的修改就行。)
 ```bash
-# 和以前一样的命令，无需修改
 python run.py --config-path ./examples/aquila/conf --config-name train train=3b_fixed experiment.runner.nproc_per_node=2 train.data.data_path=./data/pile_wikipedia_demo action=run
 
 # 然后执行生成的脚本（监控会自动启动）
@@ -16,7 +13,7 @@ bash /path/to/outputs/logs/scripts/host_0_localhost_run.sh
 # 查看所有监控文件
 ls -la outputs/logs/monitor/
 
-# 查看智能诊断报告（最重要）
+# 查看智能诊断报告
 cat outputs/logs/monitor/host_*_diagnostic_*.txt
 
 # 查看收集的训练日志
@@ -44,10 +41,3 @@ Analysis:
 - RendezvousConnectionError: Connection to rendezvous backend failed.
 - CodeError: Python exception occurred during execution.
 ```
-
-## ✅ 核心优势
-
-- **非阻塞运行** - 终端不会被卡住
-- **自动错误分析** - 智能识别常见训练问题
-- **实时监控** - 每5秒自动收集新日志
-- **零配置** - 无需修改现有训练命令
