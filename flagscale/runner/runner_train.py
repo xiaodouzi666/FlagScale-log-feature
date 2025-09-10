@@ -241,7 +241,7 @@ config = OmegaConf.create({{
     }},
     "experiment": {{
         "runner": {{
-            "no_shared_fs": {str(no_shared_fs).lower()},
+            "no_shared_fs": {str(no_shared_fs)},
             "ssh_port": 22
         }}
     }}
