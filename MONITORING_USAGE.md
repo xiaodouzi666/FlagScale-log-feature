@@ -23,7 +23,7 @@ ls -la outputs/logs/monitor/host_*_temp_*.log
 cat outputs/logs/monitor/status.log
 ```
 
-## 📁 文件说明
+## 文件说明
 
 | 文件 | 作用 |
 |------|------|
@@ -31,7 +31,7 @@ cat outputs/logs/monitor/status.log
 | `host_*_temp_*.log` | **收集的训练日志** - 增量收集的日志内容 |
 | `status.log` | **状态跟踪** - 记录训练状态变化 |
 
-## 🔍 诊断报告示例
+## 诊断报告示例
 
 ```
 Diagnostic Report for localhost (node 0)

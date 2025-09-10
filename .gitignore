@@ -21,3 +21,5 @@ tests/functional_tests/test_cases/*/*/results_test
 # template files generated
 template_conf.yaml
 template_funcs.py
+
+.DS_Store
