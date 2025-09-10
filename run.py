@@ -53,7 +53,7 @@ def main(config: DictConfig) -> None:
                     monitor=True,
                     enable_log_collection=True,
                     enable_diagnostic=True,
-                    interval=30
+                    interval=5  # 改为5秒，更快捕获状态变化
                 )
                 if monitor_service:
                     from flagscale.logger import logger
