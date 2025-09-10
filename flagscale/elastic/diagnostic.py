@@ -5,19 +5,44 @@ from datetime import datetime
 from flagscale.runner.utils import logger
 
 error_types = {
+    # Success indicators
     "completed": "Completed: The task finished successfully with no errors.",
-    "codeerror": "CodeError: An error was raised from the user training script.",
-    "OutOfMemoryError": "WorkerOOM: The training process ran out of GPU memory.",
-    "evaluatoroom": "EvaluatorOOM: The evaluator process ran out of memory.",
-    "workererror": "WorkerError: The worker process exited abnormally.",
-    "evaluatorerror": "EvaluatorError: The evaluator process exited abnormally.",
-    "nodecheckfailed": "NodeCheckFailed: Node health check failed.",
-    "hangerror": "HangError: The training task made no progress for a long time.",
-    "rdzvtimeout": "RdzvTimeout: Rendezvous timeout, nodes in multi-node training failed to synchronize initialization within the allowed time.",
-    "pendingtimeout": "PendingTimeout: The task waited too long in the scheduling queue without being started.",
-    "uncompletedtimeout": "UncompletedTimeout: The task did not finish within the specified time.",
-    "storageerror": "StorageError: Dataset or checkpoint storage system error.",
-    "signalException": "KilledByUser: The task was manually stopped by the user.",
+    
+    # Memory errors
+    "out of memory": "OutOfMemoryError: The training process ran out of GPU memory.",
+    "outofmemoryerror": "OutOfMemoryError: The training process ran out of GPU memory.",
+    "cuda out of memory": "OutOfMemoryError: CUDA out of memory error occurred.",
+    
+    # Connection and network errors  
+    "rendezvousconne": "RendezvousConnectionError: Connection to rendezvous backend failed.",
+    "rendezvous": "RendezvousError: Rendezvous coordination failed between nodes.",
+    "connection refused": "ConnectionError: Network connection refused.",
+    "connection timeout": "ConnectionTimeout: Network connection timeout.",
+    
+    # Import and code errors
+    "importerror": "ImportError: Failed to import required modules.",
+    "modulenotfounderror": "ModuleNotFoundError: Required Python module not found.",
+    "traceback": "CodeError: Python exception occurred during execution.",
+    "error": "GeneralError: An error occurred during training.",
+    
+    # Process errors
+    "killed": "ProcessKilled: Training process was killed.",
+    "segmentation fault": "SegmentationFault: Process crashed due to memory access error.",
+    "core dumped": "CoreDump: Process crashed and dumped core.",
+    
+    # CUDA errors
+    "cuda": "CUDAError: CUDA-related error occurred.",
+    "cudnn": "CUDNNError: CuDNN library error occurred.",
+    "gpu": "GPUError: GPU-related error occurred.",
+    
+    # File and storage errors
+    "no such file": "FileNotFound: Required file or directory not found.",
+    "permission denied": "PermissionError: File permission denied.",
+    "disk space": "StorageError: Insufficient disk space.",
+    
+    # Timeout errors
+    "timeout": "TimeoutError: Operation timed out.",
+    "hanging": "HangError: Process appears to be hanging.",
 }
 
 
