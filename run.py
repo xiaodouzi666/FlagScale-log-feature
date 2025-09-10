@@ -48,16 +48,11 @@ def main(config: DictConfig) -> None:
                 raise ValueError(f"Unknown runner type {config.runner.type}")
 
             if config.action == "run":
-                # 启用监控和日志收集功能
-                monitor_service = runner.run(
-                    monitor=True,
-                    enable_log_collection=True,
-                    enable_diagnostic=True,
-                    interval=5  # 改为5秒，更快捕获状态变化
-                )
-                if monitor_service:
-                    from flagscale.logger import logger
-                    logger.info("Monitor service started in background")
+                # 只运行训练准备，监控服务将在实际训练脚本中启动
+                runner.run()
+                from flagscale.logger import logger
+                logger.info("Training setup completed. Run the generated script to start training with monitoring.")
+                logger.info("Monitor service will be started automatically when training begins.")
             elif config.action == "dryrun":
                 runner.run(dryrun=True)
             elif config.action == "test":
