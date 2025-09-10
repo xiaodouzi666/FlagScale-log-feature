@@ -48,7 +48,16 @@ def main(config: DictConfig) -> None:
                 raise ValueError(f"Unknown runner type {config.runner.type}")
 
             if config.action == "run":
-                runner.run()
+                # 启用监控和日志收集功能
+                monitor_service = runner.run(
+                    monitor=True,
+                    enable_log_collection=True,
+                    enable_diagnostic=True,
+                    interval=30
+                )
+                if monitor_service:
+                    from flagscale.logger import logger
+                    logger.info("Monitor service started in background")
             elif config.action == "dryrun":
                 runner.run(dryrun=True)
             elif config.action == "test":
@@ -56,7 +65,10 @@ def main(config: DictConfig) -> None:
             elif config.action == "stop":
                 runner.stop()
             elif config.action == "query":
-                runner.query()
+                # 使用新的非阻塞查询方法
+                status = runner.query_once()
+                from flagscale.logger import logger
+                logger.info(f"Current job status: {status.name}")
             else:
                 raise ValueError(f"Unknown action {config.action}")
     elif task_type == "inference":
