@@ -24,3 +24,6 @@ template_funcs.py
 
 # data files
 assets/
+
+# macOS system files
+.DS_Store
