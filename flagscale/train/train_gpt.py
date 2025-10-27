@@ -42,6 +42,18 @@ from flagscale.train.global_vars import get_parallel_context
 stimer = StragglerDetector()
 
 
+def add_perf_monitor_args(parser):
+    """Add performance monitoring arguments."""
+    group = parser.add_argument_group(title='performance monitoring')
+    group.add_argument('--enable-perf-monitor', action='store_true',
+                       help='Enable performance monitoring for FLOPS tracking')
+
+    # Chain with ModelOpt args if available
+    if has_nvidia_modelopt:
+        return add_modelopt_args(parser)
+    return parser
+
+
 def get_batch(data_iterator, vp_stage=None):
     """Generate a batch."""
     # TODO: this is pretty hacky, find a better way
@@ -250,7 +262,7 @@ if __name__ == "__main__":
         ModelType.encoder_or_decoder,
         forward_step,
         args_defaults={'tokenizer_type': 'GPT2BPETokenizer'},
-        extra_args_provider=add_modelopt_args if has_nvidia_modelopt else None,
+        extra_args_provider=add_perf_monitor_args,
         store=store,
         extra_valid_dataset_provider=extra_valid_datasets_provider
     )
