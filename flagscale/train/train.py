@@ -1932,7 +1932,10 @@ def training_log(
             try:
                 metrics = perf_monitor.calculate_metrics(iteration)
                 if metrics.tflops_per_gpu > 0:
-                    perf_log = f"[Rank {torch.distributed.get_rank()}]"
+                    rank = 0
+                    if torch.distributed.is_initialized():
+                        rank = torch.distributed.get_rank()
+                    perf_log = f"[Rank {rank}]"
                     perf_log += f" iteration {iteration} |"
                     perf_log += f" TFLOPS/GPU: {metrics.tflops_per_gpu:.2f} |"
                     if metrics.tokens_per_second > 0:
@@ -1941,7 +1944,10 @@ def training_log(
                         perf_log += f" samples/sec: {metrics.samples_per_second:.2f} |"
                     print_rank_0(perf_log)
             except Exception as e:
-                if torch.distributed.get_rank() == 0:
+                rank = 0
+                if torch.distributed.is_initialized():
+                    rank = torch.distributed.get_rank()
+                if rank == 0:
                     print(f"Warning: Performance monitor error at iteration {iteration}: {e}")
 
     if iteration % args.log_interval == 0:
