@@ -1360,24 +1360,38 @@ def get_optimizer_param_scheduler(optimizer):
           cosine_period_samples=args.lr_decay_stablelm2_cosine_period_samples,
           decay_samples=args.lr_decay_stablelm2_decay_samples)
     ########## FlagScale End ##########
-    opt_param_scheduler = OptimizerParamScheduler(
-        optimizer,
-        init_lr=args.lr_warmup_init,
-        max_lr=args.lr,
-        min_lr=args.min_lr,
-        lr_warmup_steps=lr_warmup_steps,
-        lr_decay_steps=lr_decay_steps,
-        lr_decay_style=args.lr_decay_style,
-        start_wd=args.start_weight_decay,
-        end_wd=args.end_weight_decay,
-        wd_incr_steps=wd_incr_steps,
-        wd_incr_style=args.weight_decay_incr_style,
-        use_checkpoint_opt_param_scheduler=args.use_checkpoint_opt_param_scheduler,
-        override_opt_param_scheduler=args.override_opt_param_scheduler,
-        wsd_decay_steps=wsd_decay_steps,
-        lr_wsd_decay_style=args.lr_wsd_decay_style,
-        stablelm2_scheduler_config=stablelm2_scheduler_config,
-    )
+    # 创建参数字典，只包含OptimizerParamScheduler支持的参数
+    scheduler_params = {
+        'optimizer': optimizer,
+        'init_lr': args.lr_warmup_init,
+        'max_lr': args.lr,
+        'min_lr': args.min_lr,
+        'lr_warmup_steps': lr_warmup_steps,
+        'lr_decay_steps': lr_decay_steps,
+        'lr_decay_style': args.lr_decay_style,
+        'start_wd': args.start_weight_decay,
+        'end_wd': args.end_weight_decay,
+        'wd_incr_steps': wd_incr_steps,
+        'wd_incr_style': args.weight_decay_incr_style,
+        'use_checkpoint_opt_param_scheduler': args.use_checkpoint_opt_param_scheduler,
+        'override_opt_param_scheduler': args.override_opt_param_scheduler,
+    }
+
+    # 尝试添加可能不支持的参数
+    try:
+        # 测试是否支持这些FlagScale自定义参数
+        test_scheduler = OptimizerParamScheduler(
+            optimizer,
+            wsd_decay_steps=wsd_decay_steps,
+            lr_wsd_decay_style=args.lr_wsd_decay_style
+        )
+        # 如果支持，添加到参数字典
+        scheduler_params['wsd_decay_steps'] = wsd_decay_steps
+        scheduler_params['lr_wsd_decay_style'] = args.lr_wsd_decay_style
+    except:
+        pass  # 不支持则忽略
+
+    opt_param_scheduler = OptimizerParamScheduler(**scheduler_params)
 
     return opt_param_scheduler
 
