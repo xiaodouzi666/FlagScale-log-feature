@@ -1608,7 +1608,7 @@ def train_step(forward_step_func, data_iterator, model, optimizer, opt_param_sch
         return {}, True, should_checkpoint, should_exit, exit_code, None, None
 
     ########## FlagScale Begin ##########
-    if args.auto_skip_spiky_loss and (args.consumed_train_samples > args.lr_warmup_samples and args.curr_iteration > args.lr_warmup_iters):
+    if getattr(args, 'auto_skip_spiky_loss', False) and (args.consumed_train_samples > getattr(args, 'lr_warmup_samples', 0) and args.curr_iteration > getattr(args, 'lr_warmup_iters', 0)):
         spiky_loss_detector = get_spiky_loss_detector()
         loss_ = spiky_loss_detector.reduce_losses(losses_reduced)
         is_spiky_loss = spiky_loss_detector.is_spkiy_loss(loss_)
