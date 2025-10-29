@@ -4,7 +4,7 @@ system:
   disable_bias_linear: True
   use_flash_attn: True
   use_distributed_optimizer: True
-  enable_perf_monitor: True
+  enable_perf_monitor: False
   perf_log_interval: 10
   precision:
     fp16: True
