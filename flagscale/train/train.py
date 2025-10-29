@@ -2658,17 +2658,17 @@ def train(
         args.curr_iteration = iteration
 
         ########## FlagScale Begin ##########
-        if args.skip_samples_range or args.skip_iters_range:
+        if getattr(args, 'skip_samples_range', None) or getattr(args, 'skip_iters_range', None):
             current_global_batch_size = get_current_global_batch_size()
             start_skip_iteration = 0
             end_skip_iteration = 0
-            if args.skip_samples_range:
+            if getattr(args, 'skip_samples_range', None):
                 if args.consumed_train_samples + current_global_batch_size > args.skip_samples_range[0] and args.consumed_train_samples < args.skip_samples_range[1]:
                     num_skipped_iters = (args.skip_samples_range[1] - args.consumed_train_samples + current_global_batch_size - 1) // current_global_batch_size
                     args.skip_samples_range[1] = args.consumed_train_samples + num_skipped_iters * current_global_batch_size
                     start_skip_iteration = iteration
                     end_skip_iteration = iteration + num_skipped_iters
-            else:
+            elif getattr(args, 'skip_iters_range', None):
                 if iteration >= args.skip_iters_range[0] and iteration < args.skip_iters_range[1]:
                     start_skip_iteration = iteration
                     end_skip_iteration = args.skip_iters_range[1]

@@ -253,7 +253,7 @@ class ModelFLOPSCalculator:
                 return 'aquila'
 
         # Check for MoE configuration
-        if hasattr(self.args, 'num_experts') and self.args.num_experts > 1:
+        if hasattr(self.args, 'num_experts') and self.args.num_experts is not None and self.args.num_experts > 1:
             return 'moe'
 
         # Default to GPT
