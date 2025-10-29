@@ -30,7 +30,7 @@ model:
   use_rotary_position_embeddings: true
   no_position_embedding: true
   swiglu: true
-  multiple_of: 256
+  # multiple_of: 256
   normalization: RMSNorm
   # rotary_interleaved_patch: true
   untie_embeddings_and_output_weights: true
@@ -63,5 +63,5 @@ data:
     tokenizer_type: GPT2BPETokenizer
     vocab_file: ./examples/aquila/tokenizer/vocab.json
     merge_file: ./examples/aquila/tokenizer/merges.txt
-    special_tokens_file: ./examples/aquila/tokenizer/special_tokens.txt
+    # special_tokens_file: ./examples/aquila/tokenizer/special_tokens.txt
     vocab_size: 100008
