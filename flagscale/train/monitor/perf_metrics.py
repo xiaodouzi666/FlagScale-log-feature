@@ -10,6 +10,12 @@ import torch.distributed as dist
 
 from flagscale.train.monitor.flops_calculator import FLOPSFormulas
 
+# Try to import get_num_microbatches function
+try:
+    from megatron.core.num_microbatches_calculator import get_num_microbatches
+except ImportError:
+    get_num_microbatches = None
+
 
 @dataclass
 class TFLOPSMetrics:
@@ -119,13 +125,17 @@ class PerformanceMonitor:
         self.metrics.std_step_time = np.std(recent_times) if recent_times else 0
 
         # Calculate model FLOPS
-        batch_size = self.args.micro_batch_size * self.args.num_micro_batches
+        if get_num_microbatches is not None:
+            num_micro_batches = get_num_microbatches()
+        else:
+            num_micro_batches = getattr(self.args, 'num_micro_batches', getattr(self.args, 'gradient_accumulation_steps', 1))
+        batch_size = self.args.micro_batch_size * num_micro_batches
         model_flops = self.flops_calculator.calculate_total_flops(batch_size)
         self.metrics.model_flops = model_flops
 
         # Calculate TFLOPS per GPU
         if avg_step_time > 0:
-            num_gpus = self.args.world_size
+            num_gpus = getattr(self.args, 'world_size', 1)
             flops_per_gpu = model_flops / num_gpus
             self.metrics.tflops_per_gpu = flops_per_gpu / (1e12 * avg_step_time)
             self.metrics.tflops_total = model_flops / (1e12 * avg_step_time)
@@ -155,7 +165,7 @@ class PerformanceMonitor:
         metrics = self.calculate_metrics(iteration)
 
         # Console logging
-        if torch.distributed.get_rank() == 0:
+        if not torch.distributed.is_initialized() or torch.distributed.get_rank() == 0:
             print(f"\n{'='*60}")
             print(f"Performance Metrics at Iteration {iteration}")
             print(f"{'='*60}")
@@ -420,7 +430,11 @@ class ModelFLOPSCalculator:
         Returns:
             Dictionary with FLOPS for different components
         """
-        batch_size = self.args.micro_batch_size * self.args.num_micro_batches
+        if get_num_microbatches is not None:
+            num_micro_batches = get_num_microbatches()
+        else:
+            num_micro_batches = getattr(self.args, 'num_micro_batches', getattr(self.args, 'gradient_accumulation_steps', 1))
+        batch_size = self.args.micro_batch_size * num_micro_batches
 
         if self.model_type in ['gpt', 'llama', 'qwen', 'aquila']:
             args = self.args
