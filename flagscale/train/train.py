@@ -250,10 +250,10 @@ def num_floating_point_operations(args, batch_size):
         query_projection_size = args.kv_channels * args.num_attention_heads
         query_projection_to_hidden_size_ratio = query_projection_size / args.hidden_size
         # Group Query Attention.
-        if not args.group_query_attention:
+        if not getattr(args, 'group_query_attention', False):
             args.num_query_groups = args.num_attention_heads
         # MoE.
-        if args.num_experts is None:
+        if getattr(args, 'num_experts', None) is None:
             # Every Transformer MLP is dense.
             num_dense_layers = args.num_layers
             num_moe_layers = 0
@@ -279,7 +279,7 @@ def num_floating_point_operations(args, batch_size):
             num_experts_routed_to = args.moe_router_topk
             last_layer_is_moe = moe_layer_pattern[-1]
 
-        if args.mtp_num_layers is not None:
+        if getattr(args, 'mtp_num_layers', None) is not None:
             mtp_num_layers = args.mtp_num_layers
             num_moe_layers += last_layer_is_moe * mtp_num_layers
             num_dense_layers += (1 - last_layer_is_moe) * mtp_num_layers
@@ -299,7 +299,7 @@ def num_floating_point_operations(args, batch_size):
             else args.moe_shared_expert_intermediate_size
         )
         # SwiGLU.
-        gated_linear_multiplier = 3 / 2 if args.swiglu else 1
+        gated_linear_multiplier = 3 / 2 if getattr(args, 'swiglu', False) else 1
 
         # The 12x term below comes from the following factors; for more details, see
         # "APPENDIX: FLOATING-POINT OPERATIONS" in https://arxiv.org/abs/2104.04473.
@@ -311,8 +311,8 @@ def num_floating_point_operations(args, batch_size):
         # - 2x: A GEMM of a m*n tensor with a n*k tensor requires 2mnk floating-point operations.
         expansion_factor = 3 * 2 * 2
 
-        if args.multi_latent_attention:
-            assert not args.group_query_attention
+        if getattr(args, 'multi_latent_attention', False):
+            assert not getattr(args, 'group_query_attention', False)
             '''
             Basic arithmetic
             let B is batch size, s is seq_len, h is embedding dim,
@@ -327,7 +327,7 @@ def num_floating_point_operations(args, batch_size):
             https://arxiv.org/abs/2205.05198
             '''
             ## MLA
-            if args.q_lora_rank is None:
+            if getattr(args, 'q_lora_rank', None) is None:
                 q_term = (
                     args.hidden_size
                     * args.num_attention_heads
@@ -453,11 +453,11 @@ def num_floating_point_operations_fs(args, batch_size):
     def transformer_flops():
 
         # Part 1: Attention ======================================================================
-        if args.multi_latent_attention:
+        if getattr(args, 'multi_latent_attention', False):
             # qkv proj
             q_head_dim = args.qk_head_dim + args.qk_pos_emb_head_dim
             # q lora + rope + q norm
-            if args.q_lora_rank is None:
+            if getattr(args, 'q_lora_rank', None) is None:
                 num_flops_attn = (
                     2
                     * batch_size
@@ -504,7 +504,7 @@ def num_floating_point_operations_fs(args, batch_size):
             )
         else:
             # Group Query Attention.
-            if not args.group_query_attention:
+            if not getattr(args, 'group_query_attention', False):
                 args.num_query_groups = args.num_attention_heads
             # Attention projection size.
             query_projection_size = args.kv_channels * args.num_attention_heads
@@ -543,10 +543,10 @@ def num_floating_point_operations_fs(args, batch_size):
             else args.moe_shared_expert_intermediate_size
         )
         # SwiGLU.
-        gated_linear_multiplier = 3 / 2 if args.swiglu else 1
+        gated_linear_multiplier = 3 / 2 if getattr(args, 'swiglu', False) else 1
 
         # MoE.
-        if args.num_experts is None:
+        if getattr(args, 'num_experts', None) is None:
             # Every Transformer MLP is dense.
             num_dense_layers = args.num_layers
             num_moe_layers = 0
@@ -612,7 +612,7 @@ def num_floating_point_operations_fs(args, batch_size):
         )
 
         # Part3: MTP =============================================================================
-        if args.mtp_num_layers is not None:
+        if getattr(args, 'mtp_num_layers', None) is not None:
             mtp_num_layers = args.mtp_num_layers
             num_moe_layers += last_layer_is_moe * mtp_num_layers
             num_dense_layers += (1 - last_layer_is_moe) * mtp_num_layers
@@ -1173,7 +1173,7 @@ def get_model(model_provider_func, model_type=ModelType.encoder_or_decoder, wrap
     ######## FLAGSCALE BEGIN ########
     # 1) init
     config = get_model_config(model[0])
-    if config.peft_type is not None:
+    if getattr(config, 'peft_type', None) is not None:
         peft = PEFT.from_config(config)
         unwrapped_model = unwrap_model(model)
         if not isinstance(unwrapped_model, list):
