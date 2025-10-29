@@ -145,10 +145,7 @@ from flagscale.train.peft.peft import PEFT
 from flagscale.train.peft.lora import LoRA
 
 # Import performance monitoring modules
-from flagscale.train.monitor.perf_metrics import (
-    PerformanceMonitor,
-    FLOPSMeasurementCallback
-)
+from flagscale.train.monitor.perf_metrics import PerformanceMonitor
 
 def destroy_global_state():
     destroy_global_vars()
@@ -821,10 +818,12 @@ def pretrain(
     # image ... launches.
     global _TRAIN_START_TIME
     ########## FlagScale Begin ##########
-    if "cpu:gloo" == torch.distributed.get_backend():
-        start_time_tensor = torch.tensor([_TRAIN_START_TIME], dtype=torch.double, device='cpu')
-    else:
-        start_time_tensor = torch.tensor([_TRAIN_START_TIME], dtype=torch.double, device='cuda')
+    device = 'cuda'  # Default to cuda
+    if torch.distributed.is_initialized():
+        backend = torch.distributed.get_backend()
+        if "cpu:gloo" == backend or "gloo" == backend:
+            device = 'cpu'
+    start_time_tensor = torch.tensor([_TRAIN_START_TIME], dtype=torch.double, device=device)
     ########## FlagScale Begin ##########
     torch.distributed.all_reduce(start_time_tensor, op=torch.distributed.ReduceOp.MIN)
     _TRAIN_START_TIME = start_time_tensor.item()
