@@ -80,7 +80,7 @@ def build_extra_valid_datasets(build_extra_valid_dataset_provider):
 
     args = get_args()
 
-    if getattr(args, 'extra_valid_data_path', None) is None:
+    if args.extra_valid_data_path is None:
         return [None]
 
     assert (

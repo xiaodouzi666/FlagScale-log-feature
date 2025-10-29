@@ -4,8 +4,6 @@ system:
   disable_bias_linear: True
   use_flash_attn: True
   use_distributed_optimizer: True
-  enable_perf_monitor: True
-  perf_log_interval: 10
   precision:
     fp16: True
     initial_loss_scale: 522893
@@ -30,7 +28,7 @@ model:
   use_rotary_position_embeddings: true
   no_position_embedding: true
   swiglu: true
-  # multiple_of: 256
+  multiple_of: 256
   normalization: RMSNorm
   # rotary_interleaved_patch: true
   untie_embeddings_and_output_weights: true
@@ -39,10 +37,10 @@ model:
   hidden_dropout: 0.0
   weight_decay: 0.1
   clip_grad: 1.0
-  train_samples: 1000
+  train_samples: 1002539063
   eval_iters: 0
   micro_batch_size: 2
-  global_batch_size: 16  # 8GPU * 2 samples/GPU
+  global_batch_size: 1728
   seed: 1234
 
   optimizer:
@@ -59,9 +57,8 @@ data:
   data_path: ${data_path:??}
   split: 1
   tokenizer:
-    legacy_tokenizer: true
-    tokenizer_type: GPT2BPETokenizer
+    tokenizer_type: AquilaTokenizerFS
     vocab_file: ./examples/aquila/tokenizer/vocab.json
     merge_file: ./examples/aquila/tokenizer/merges.txt
-    # special_tokens_file: ./examples/aquila/tokenizer/special_tokens.txt
+    special_tokens_file: ./examples/aquila/tokenizer/special_tokens.txt
     vocab_size: 100008

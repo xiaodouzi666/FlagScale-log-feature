@@ -37,22 +37,9 @@ except ImportError:
 from flagscale.train.extra_valid import extra_valid_datasets_provider
 from flagscale.train.train import pretrain
 from flagscale.train.global_vars import get_parallel_context
-from flagscale.train.monitor.integration import add_performance_args
 
 
 stimer = StragglerDetector()
-
-
-def add_extra_args(parser):
-    """Add extra arguments including performance monitoring and ModelOpt."""
-    # Add performance monitoring args
-    parser = add_performance_args(parser)
-
-    # Chain with ModelOpt args if available
-    if has_nvidia_modelopt:
-        parser = add_modelopt_args(parser)
-
-    return parser
 
 
 def get_batch(data_iterator, vp_stage=None):
@@ -263,7 +250,7 @@ if __name__ == "__main__":
         ModelType.encoder_or_decoder,
         forward_step,
         args_defaults={'tokenizer_type': 'GPT2BPETokenizer'},
-        extra_args_provider=add_extra_args,
+        extra_args_provider=add_modelopt_args if has_nvidia_modelopt else None,
         store=store,
         extra_valid_dataset_provider=extra_valid_datasets_provider
     )
