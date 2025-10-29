@@ -2848,7 +2848,7 @@ def train(
 
         ######## FlagScale Begin ########
         # Extra Evaluation =====================================================================
-        if args.extra_eval_interval and iteration % args.extra_eval_interval == 0:
+        if getattr(args, 'extra_eval_interval', None) and iteration % args.extra_eval_interval == 0:
             # NOTE(zhaoyinglia): Must rebuild the dataloaders for extra validation here,
             # to guarantee extra validation start from extra_iter=0 every time,
             # but we don't need to rebuild the datasets.
