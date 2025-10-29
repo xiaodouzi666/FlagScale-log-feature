@@ -1926,6 +1926,24 @@ def training_log(
         MTPLossLoggingHelper.track_mtp_metrics(
             mtp_loss_scale, iteration, writer, wandb_writer, total_loss_dict
         )
+    # Performance monitor output at perf_log_interval
+    if perf_monitor is not None and getattr(args, 'perf_log_interval', 0) > 0:
+        if iteration % args.perf_log_interval == 0 and iteration > 0:
+            try:
+                metrics = perf_monitor.calculate_metrics(iteration)
+                if metrics.tflops_per_gpu > 0:
+                    perf_log = f"[Rank {torch.distributed.get_rank()}]"
+                    perf_log += f" iteration {iteration} |"
+                    perf_log += f" TFLOPS/GPU: {metrics.tflops_per_gpu:.2f} |"
+                    if metrics.tokens_per_second > 0:
+                        perf_log += f" tokens/sec: {metrics.tokens_per_second:.0f} |"
+                    if metrics.samples_per_second > 0:
+                        perf_log += f" samples/sec: {metrics.samples_per_second:.2f} |"
+                    print_rank_0(perf_log)
+            except Exception as e:
+                if torch.distributed.get_rank() == 0:
+                    print(f"Warning: Performance monitor error at iteration {iteration}: {e}")
+
     if iteration % args.log_interval == 0:
         if args.record_memory_history and is_last_rank():
             snapshot = torch.cuda.memory._snapshot()
@@ -1969,7 +1987,7 @@ def training_log(
             try:
                 metrics = perf_monitor.calculate_metrics(iteration)
                 if metrics.tflops_per_gpu > 0:
-                    log_string += f' TFLOPS/GPU (monitored): {metrics.tflops_per_gpu:.2f} |'
+                    log_string += f' TFLOPS/GPU: {metrics.tflops_per_gpu:.2f} |'
                     if metrics.tokens_per_second > 0:
                         log_string += f' tokens/sec: {metrics.tokens_per_second:.0f} |'
 

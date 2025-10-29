@@ -288,17 +288,17 @@ class ModelFLOPSCalculator:
         """Calculate FLOPS for GPT-style models."""
         args = self.args
 
-        # Extract configuration
-        seq_length = args.seq_length
-        hidden_size = args.hidden_size
-        num_layers = args.num_layers
-        vocab_size = getattr(args, 'vocab_size', args.padded_vocab_size)
+        # Extract configuration with safe access
+        seq_length = getattr(args, 'seq_length', 512)
+        hidden_size = getattr(args, 'hidden_size', 768)
+        num_layers = getattr(args, 'num_layers', 12)
+        vocab_size = getattr(args, 'vocab_size', getattr(args, 'padded_vocab_size', 50257))
 
         # Attention parameters
-        num_attention_heads = args.num_attention_heads
+        num_attention_heads = getattr(args, 'num_attention_heads', 12)
 
         # FFN parameters
-        ffn_hidden_size = getattr(args, 'ffn_hidden_size', 4 * hidden_size)
+        ffn_hidden_size = getattr(args, 'ffn_hidden_size', 4 * hidden_size if hidden_size else 3072)
 
         # Calculate attention FLOPS
         attention_flops = self.formulas.attention_flops(
@@ -331,13 +331,14 @@ class ModelFLOPSCalculator:
         """Calculate FLOPS for LLaMA-style models."""
         args = self.args
 
-        seq_length = args.seq_length
-        hidden_size = args.hidden_size
-        num_layers = args.num_layers
-        vocab_size = getattr(args, 'vocab_size', args.padded_vocab_size)
+        # Extract configuration with safe access
+        seq_length = getattr(args, 'seq_length', 512)
+        hidden_size = getattr(args, 'hidden_size', 768)
+        num_layers = getattr(args, 'num_layers', 12)
+        vocab_size = getattr(args, 'vocab_size', getattr(args, 'padded_vocab_size', 50257))
 
         # LLaMA specific: GQA (Grouped Query Attention)
-        num_attention_heads = args.num_attention_heads
+        num_attention_heads = getattr(args, 'num_attention_heads', 12)
         num_query_groups = getattr(args, 'num_query_groups', num_attention_heads)
 
         # FFN with SwiGLU activation
@@ -379,17 +380,18 @@ class ModelFLOPSCalculator:
         """Calculate FLOPS for Mixture of Experts models."""
         args = self.args
 
-        seq_length = args.seq_length
-        hidden_size = args.hidden_size
-        num_layers = args.num_layers
-        vocab_size = getattr(args, 'vocab_size', args.padded_vocab_size)
+        # Extract configuration with safe access
+        seq_length = getattr(args, 'seq_length', 512)
+        hidden_size = getattr(args, 'hidden_size', 768)
+        num_layers = getattr(args, 'num_layers', 12)
+        vocab_size = getattr(args, 'vocab_size', getattr(args, 'padded_vocab_size', 50257))
 
         # MoE specific parameters
         num_experts = getattr(args, 'num_experts', 8)
         top_k = getattr(args, 'moe_router_topk', 2)
 
         # Attention parameters
-        num_attention_heads = args.num_attention_heads
+        num_attention_heads = getattr(args, 'num_attention_heads', 12)
 
         # Calculate attention FLOPS (same as regular transformer)
         attention_flops = self.formulas.attention_flops(
@@ -440,16 +442,18 @@ class ModelFLOPSCalculator:
 
         if self.model_type in ['gpt', 'llama', 'qwen', 'aquila']:
             args = self.args
-            seq_length = args.seq_length
-            hidden_size = args.hidden_size
-            num_layers = args.num_layers
+            # Extract configuration with safe access
+            seq_length = getattr(args, 'seq_length', 512)
+            hidden_size = getattr(args, 'hidden_size', 768)
+            num_layers = getattr(args, 'num_layers', 12)
+            num_attention_heads = getattr(args, 'num_attention_heads', 12)
 
             # Calculate component FLOPS
             attention_flops = self.formulas.attention_flops(
                 batch_size=batch_size,
                 seq_length=seq_length,
                 hidden_size=hidden_size,
-                num_attention_heads=args.num_attention_heads
+                num_attention_heads=num_attention_heads
             ) * num_layers
 
             ffn_hidden_size = getattr(args, 'ffn_hidden_size', 4 * hidden_size)
