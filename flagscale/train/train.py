@@ -145,7 +145,9 @@ from flagscale.train.peft.peft import PEFT
 from flagscale.train.peft.lora import LoRA
 
 # Import performance monitoring modules
-from flagscale.train.monitor.perf_metrics import PerformanceMonitor
+# Temporarily disabled for debugging
+# from flagscale.train.monitor.perf_metrics import PerformanceMonitor
+PerformanceMonitor = None  # Placeholder to prevent NameError
 
 def destroy_global_state():
     destroy_global_vars()
@@ -818,12 +820,16 @@ def pretrain(
     # image ... launches.
     global _TRAIN_START_TIME
     ########## FlagScale Begin ##########
-    device = 'cuda'  # Default to cuda
-    if torch.distributed.is_initialized():
+    # Try to get backend, fall back to cuda if error
+    try:
         backend = torch.distributed.get_backend()
-        if "cpu:gloo" == backend or "gloo" == backend:
-            device = 'cpu'
-    start_time_tensor = torch.tensor([_TRAIN_START_TIME], dtype=torch.double, device=device)
+        if "cpu:gloo" == backend:
+            start_time_tensor = torch.tensor([_TRAIN_START_TIME], dtype=torch.double, device='cpu')
+        else:
+            start_time_tensor = torch.tensor([_TRAIN_START_TIME], dtype=torch.double, device='cuda')
+    except (RuntimeError, AttributeError):
+        # Distributed not initialized yet, use cuda as default
+        start_time_tensor = torch.tensor([_TRAIN_START_TIME], dtype=torch.double, device='cuda')
     ########## FlagScale Begin ##########
     torch.distributed.all_reduce(start_time_tensor, op=torch.distributed.ReduceOp.MIN)
     _TRAIN_START_TIME = start_time_tensor.item()
@@ -2538,7 +2544,7 @@ def train(
 
     # Initialize performance monitor if enabled
     perf_monitor = None
-    if getattr(args, 'enable_perf_monitor', False):
+    if getattr(args, 'enable_perf_monitor', False) and PerformanceMonitor is not None:
         try:
             perf_monitor = PerformanceMonitor(args, enable_memory_tracking=True)
             print_rank_0("> Performance monitor enabled for FLOPS tracking")
