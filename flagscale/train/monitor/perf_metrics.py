@@ -129,7 +129,8 @@ class PerformanceMonitor:
             num_micro_batches = get_num_microbatches()
         else:
             num_micro_batches = getattr(self.args, 'num_micro_batches', getattr(self.args, 'gradient_accumulation_steps', 1))
-        batch_size = self.args.micro_batch_size * num_micro_batches
+        micro_batch_size = getattr(self.args, 'micro_batch_size', 1)
+        batch_size = micro_batch_size * num_micro_batches if micro_batch_size else num_micro_batches
         model_flops = self.flops_calculator.calculate_total_flops(batch_size)
         self.metrics.model_flops = model_flops
 
@@ -434,7 +435,8 @@ class ModelFLOPSCalculator:
             num_micro_batches = get_num_microbatches()
         else:
             num_micro_batches = getattr(self.args, 'num_micro_batches', getattr(self.args, 'gradient_accumulation_steps', 1))
-        batch_size = self.args.micro_batch_size * num_micro_batches
+        micro_batch_size = getattr(self.args, 'micro_batch_size', 1)
+        batch_size = micro_batch_size * num_micro_batches if micro_batch_size else num_micro_batches
 
         if self.model_type in ['gpt', 'llama', 'qwen', 'aquila']:
             args = self.args

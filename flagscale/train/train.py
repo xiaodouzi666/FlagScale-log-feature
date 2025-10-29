@@ -970,7 +970,7 @@ def pretrain(
 
         print_datetime('after training is done')
 
-        if not args.auto_tune: ########## FlagScale Add ##########
+        if not getattr(args, 'auto_tune', False): ########## FlagScale Add ##########
             if args.save and iteration != 0 and iteration % args.save_interval != 0:
                 save_checkpoint(
                     iteration,
@@ -2036,7 +2036,7 @@ def training_log(
         total_loss_dict[skipped_iters_key] = 0
         total_loss_dict[nan_iters_key] = 0
         print_rank_last(log_string)
-        if not args.auto_tune: ########## FlagScale Add ##########
+        if not getattr(args, 'auto_tune', False): ########## FlagScale Add ##########
             if report_memory_flag:
                 # Report memory after optimizer state has been initialized.
                 if torch.distributed.get_rank() == 0:
